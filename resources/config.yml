@@ -1,0 +1,13 @@
+acid:
+  rain: true
+  water: true
+  duration-ticks: 60
+  check-ticks: 20
+
+effect:
+  amplifier: 1
+  visible: true
+
+weather:
+  realtime: true
+  location: Jakarta
