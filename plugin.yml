@@ -1,9 +1,10 @@
 name: AcidWater
 main: DavyCraft648\AcidWater\AcidWater
-version: 0.0.1
-api: ["3.0.0"]
-authors: ["PetteriM1", "DavyCraft648"]
+version: 0.0.2
+api: 3.0.0
+author: DavyCraft648
 description: |-
   AcidWater plugin PocketMine-MP
   Make water, raining or both give players poison effect
 website: https://github.com/DavyCraft648/AcidWater
+softdepend: TeaSpoon

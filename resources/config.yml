@@ -1,13 +1,38 @@
 acid:
-  rain: true
+
+  # Acid water feature: true|false
+  # water: true
   water: true
+
+  # Acid rain feature: true|false
+  # rain: true
+  rain: true
+
+  # Acid duration in ticks
+  # 1 second = 20 ticks
+  # duration-ticks: 60
   duration-ticks: 60
+
+  # Acid check in ticks
+  # check-ticks: 20
   check-ticks: 20
 
 effect:
+
+  # Effect amplifier
+  # amplifier: 1
   amplifier: 1
+
+  # Effect visibility: true|false
+  # visible: true
   visible: true
 
 weather:
-  realtime: true
+
+  # Weather mode: RealTime|TeaSpoon
+  # mode: RealTime
+  mode: TeaSpoon
+
+  # Weather location IRL (Only works when weather mode set to RealTime)
+  # location: Jakarta
   location: Jakarta

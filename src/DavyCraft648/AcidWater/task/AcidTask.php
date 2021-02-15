@@ -13,9 +13,6 @@ class AcidTask extends Task
 	/** @var AcidWater  */
 	private $plugin;
 
-	/** @var bool */
-	private $raining = false;
-
 	public function __construct(AcidWater $plugin)
 	{
 		$this->plugin = $plugin;
@@ -25,12 +22,12 @@ class AcidTask extends Task
 	{
 		$onlinePlayers = $this->plugin->getServer()->getOnlinePlayers();
 		$config = $this->plugin->getConfig();
-		$poison1 = new EffectInstance(Effect::getEffect(Effect::POISON));
-		$effect1 = $poison1->setVisible($config->getNested("effect.visible", true))
+		$poison = new EffectInstance(Effect::getEffect(Effect::POISON));
+		$effect = $poison->setVisible($config->getNested("effect.visible", true))
 			->setDuration($config->getNested("acid.duration-ticks", 60))
 			->setAmplifier($config->getNested("effect.amplifier", 0));
-		if ($config->getnested("weather.realtime"))
-		{
+		$weatherModeConfig = $config->getnested("weather.mode", "realtime");
+		if (strtolower($weatherModeConfig) === "realtime") {
 			$location = $config->getNested("weather.location", "Jakarta");
 			$url = "https://rest.farzain.com/api/cuaca.php?id={$location}&apikey=O8mUD3YrHIy9KM1fMRjamw8eg";
 			try {
@@ -43,34 +40,52 @@ class AcidTask extends Task
 			} catch (\Exception $e) {
 				$result = ['status' => 648];
 			}
-			if($result['status'] === 648 or $result['status'] === 400) return;
-			foreach ($this->plugin->getServer()->getOnlinePlayers() as $onlinePlayer) {
-				if ((string)$result['list']['respon']['cuaca'] === "Rain"
-					or (string)$result['list']['respon']['cuaca'] === "Thunderstorm"
-				) {
-					$pk = new LevelEventPacket();
-					$pk->evid = LevelEventPacket::EVENT_START_RAIN;
-					$pk->data = 1000 * 100;
+			$status = $result['status'];
+			if ($status === 648 or $status === 400) return;
+			$cuaca = (string) $result['list']['respon']['cuaca'];
+			foreach ($onlinePlayers as $onlinePlayer) {
+				$pks = [
+					new LevelEventPacket(),
+					new LevelEventPacket(),
+				];
+				$pks[0]->evid = LevelEventPacket::EVENT_STOP_RAIN;
+				$pks[0]->data = 1000 * 100;
+				$pks[1]->evid = LevelEventPacket::EVENT_STOP_THUNDER;
+				$pks[1]->data = 1000 * 100;
+				switch ($cuaca) {
+					case "Rain":
+						$pks[0]->evid = LevelEventPacket::EVENT_START_RAIN;
+						$pks[0]->data = 1000 * 100;
+						$this->plugin->setRaining();
+						break;
+					case "Thunderstorm":
+						$pks[0]->evid = LevelEventPacket::EVENT_START_RAIN;
+						$pks[0]->data = 1000 * 100;
+						$pks[1]->evid = LevelEventPacket::EVENT_START_THUNDER;
+						$pks[1]->data = 1000 * 100;
+						$this->plugin->setRaining();
+						break;
+					default:
+						$this->plugin->setRaining(false);
+						break;
+				}
+				foreach ($pks as $pk) {
 					$onlinePlayer->dataPacket($pk);
-					$this->raining = true;
-				} else {
-					$pk = new LevelEventPacket();
-					$pk->evid = LevelEventPacket::EVENT_STOP_RAIN;
-					$pk->data = 1000 * 100;
-					$onlinePlayer->dataPacket($pk);
-					$this->raining = false;
 				}
 			}
 		}
 		foreach ($onlinePlayers as $onlinePlayer) {
-			if ($config->getNested("acid.water", true) and
-				$this->plugin->isInWater($onlinePlayer)
-			) $onlinePlayer->addEffect(clone $effect1);
-
-			if ($config->getNested("acid.rain", true)
-				and $this->raining
-				and $this->plugin->canSeeSky($onlinePlayer)
-			) $onlinePlayer->addEffect(clone $effect1);
+			$isInWater = $this->plugin->isInWater($onlinePlayer);
+			$canSeeSky = $this->plugin->canSeeSky($onlinePlayer);
+			$isRaining = $this->plugin->isRaining($onlinePlayer);
+			if ($config->getNested("acid.water", true) and $isInWater) {
+				$onlinePlayer->addEffect(clone $effect);
+			}
+			if ($config->getNested("acid.rain", true)) {
+				if ($isRaining and $canSeeSky) {
+					$onlinePlayer->addEffect(clone $effect);
+				}
+			}
 		}
 	}
 }
